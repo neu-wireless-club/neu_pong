@@ -1,3 +1,4 @@
+import copy
 from PyQt4 import QtGui,QtCore,Qt
 import sys
 
@@ -20,42 +21,48 @@ class GameDisplay(QtGui.QWidget):
         self.numRows = numRows
         self.cellWidth = cellWidth
         self.cellHeight = cellHeight
+        self.pointPos = [1,1]
+        self.moveDir = [1,0]
         self.initUI()
 
     def initUI(self):
         self.setGeometry(300, 300, self.cellWidth*self.numCols+50, self.cellHeight*self.numRows+50)
         self.setWindowTitle('Game')
 
-        self.pointPos = [1,1]
-
-        self.grid = QtGui.QTableWidget()
-        self.grid.setColumnCount(self.numCols)
-        self.grid.setRowCount(self.numRows)
-        self.grid.horizontalHeader().setDefaultSectionSize(self.cellWidth)
-        self.grid.verticalHeader().setDefaultSectionSize(self.cellHeight)
-        self.grid.horizontalHeader().setResizeMode(2)
-        self.grid.verticalHeader().setResizeMode(2)
-        self.grid.setEnabled(False)
+        self.table = QtGui.QTableWidget()
+        self.table.setColumnCount(self.numCols)
+        self.table.setRowCount(self.numRows)
+        self.table.horizontalHeader().setDefaultSectionSize(self.cellWidth)
+        self.table.verticalHeader().setDefaultSectionSize(self.cellHeight)
+        self.table.horizontalHeader().setResizeMode(2)
+        self.table.verticalHeader().setResizeMode(2)
+        self.table.setEnabled(False)
         for i in range(self.numRows):
             for j in range(self.numCols):
                 tmp = Pixel()
-                self.grid.setItem(i,j,tmp)
+                self.table.setItem(i,j,tmp)
+
         self.lay = QtGui.QHBoxLayout()
-        self.lay.addWidget(self.grid)
+        self.lay.addWidget(self.table)
         self.setLayout(self.lay)
 
         self.displayPoint(self.pointPos[0],self.pointPos[1],True)
+
+        self.bTimer = QtCore.QBasicTimer()
+        self.bTimer.start(100,self)
+
         self.show()
 
 
     def displayPoint(self,pointX,pointY,setTo) :
         pointY-=1
         pointX-=1
-        pxl = self.grid.item(pointY,pointX)
+        pxl = self.table.item(pointY,pointX)
         pxl.setState(setTo)
 
     def movePoint(self,dir):
         print dir
+        lastPos = copy.deepcopy(self.pointPos)
         if dir == 'up':
             self.displayPoint(self.pointPos[0],self.pointPos[1],False)
             self.pointPos[1] = self.pointPos[1]-1 if self.pointPos[1]>1 else 1
@@ -74,6 +81,10 @@ class GameDisplay(QtGui.QWidget):
             self.displayPoint(self.pointPos[0],self.pointPos[1],False)
             self.pointPos[0] = self.pointPos[0]+1 if self.pointPos[0]<self.numCols else self.numCols
             self.displayPoint(self.pointPos[0],self.pointPos[1],True)
+        if lastPos == self.pointPos:
+            return True
+        else:
+            return False
 
     def keyPressEvent(self, e):
         print 'hi'
@@ -85,12 +96,25 @@ class GameDisplay(QtGui.QWidget):
             self.movePoint('left')
         if e.key() == QtCore.Qt.Key_Right:
             self.movePoint('right')
+
+    def timerEvent(self,e):
+        moveSuccess = True
+        for i in range(abs(self.moveDir[0])):
+            dir = 'left' if self.moveDir[0] < 0 else 'right'
+            r = self.movePoint(dir)
+            self.moveDir[0] = self.moveDir[0] if not r else -self.moveDir[0]
+        for j in range(abs(self.moveDir[1])):
+            dir = 'down' if self.moveDir[1] < 0 else 'up'
+            r = self.movePoint(dir)
+            self.moveDir[1] = self.moveDir[1] if not r else -self.moveDir[1]
+
+
+
+
 def main():
     app = QtGui.QApplication(sys.argv)
     gui = GameDisplay()
     sys.exit(app.exec_())
-
-
 
 if __name__ == "__main__":
     main()
