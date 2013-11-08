@@ -23,8 +23,6 @@ class GameDisplay(QtGui.QWidget):
     yMax = 9
     moveDirX = 'none'
     moveDirY = 'none'
-    incrementX = 0
-    incrementY = 0
 
     def __init__(self,numCols=10,numRows=10,cellHeight=20,cellWidth=20):
         super(GameDisplay, self).__init__()
@@ -60,7 +58,7 @@ class GameDisplay(QtGui.QWidget):
         self.displayPoint(self.pointPos[0],self.pointPos[1],True)
 
         self.bTimer = QtCore.QBasicTimer()
-        self.bTimer.start(125,self)
+        self.bTimer.start(100,self)
 
         self.show()
 
@@ -75,20 +73,24 @@ class GameDisplay(QtGui.QWidget):
 #        print dir
         lastPos = copy.deepcopy(self.pointPos)
         if dir == 'up':
+	    self.pointY = self.pointY - 1
             self.displayPoint(self.pointPos[0],self.pointPos[1],False)
             self.pointPos[1] = self.pointPos[1]-1 if self.pointPos[1]>1 else 1
             self.displayPoint(self.pointPos[0],self.pointPos[1],True)
         if dir == 'down':
+	    self.pointY = self.pointY + 1
             self.displayPoint(self.pointPos[0],self.pointPos[1],False)
             self.pointPos[1] = self.pointPos[1]+1 if self.pointPos[1]<self.numRows else self.numRows
             self.displayPoint(self.pointPos[0],self.pointPos[1],True)
         if dir == 'left':
 #            print 'left'
+	    self.pointX = self.pointX - 1
             self.displayPoint(self.pointPos[0],self.pointPos[1],False)
             self.pointPos[0] = self.pointPos[0]-1 if self.pointPos[0]>1 else 1
             self.displayPoint(self.pointPos[0],self.pointPos[1],True)
         if dir == 'right':
 #            print 'right'
+	    self.pointX = self.pointX + 1
             self.displayPoint(self.pointPos[0],self.pointPos[1],False)
             self.pointPos[0] = self.pointPos[0]+1 if self.pointPos[0]<self.numCols else self.numCols
             self.displayPoint(self.pointPos[0],self.pointPos[1],True)
@@ -116,33 +118,22 @@ class GameDisplay(QtGui.QWidget):
 		if self.pointY == 0:
 			self.moveDirX = 'none'
 			self.moveDirY = 'down'
-			#change the incrementation so we can keep track of position
-			self.incrementX = 0
-			self.incrementY = 1
 		#bottom left corner, move it diagonal to the right
 		if self.pointY == self.yMax:
 			self.moveDirX = 'right'
 			self.moveDirY = 'up'
-			self.incrementX = 1
-			self.incrementY = -1
 	elif self.pointX == self.xMax:
 		#top right, move it down
 		if self.pointY == 0:
 			self.moveDirX = 'none'
 			self.moveDirY = 'down'
-			self.incrementX = 0
-			self.incrementY = 1
 		#bottom right, move it diagonal to the left
 		if self.pointY == self.yMax:
 			self.moveDirX = 'left'
 			self.moveDirY = 'up'
-			self.incrementX = -1
-			self.incrementY = -1
-	#call the move method, change position value if successful		
-	if self.movePoint(self.moveDirX) == True:
-		self.pointX = self.pointX + self.incrementX
-	if self.movePoint(self.moveDirY) == True:
-		self.pointY = self.pointY + self.incrementY
+	#call the move method to move pointer
+	self.movePoint(self.moveDirX)
+	self.movePoint(self.moveDirY)
 	#print position for debugging
 	print str(self.pointX) + ", " + str(self.pointY)
 
