@@ -15,6 +15,17 @@ class Pixel(QtGui.QTableWidgetItem):
             self.setBackgroundColor(QtCore.Qt.black)
 
 class GameDisplay(QtGui.QWidget):
+# "global" variables used to move the pointer with timer
+# set default values first
+    pointX = 0 
+    pointY = 0
+    xMax = 9
+    yMax = 9
+    moveDirX = 'none'
+    moveDirY = 'none'
+    incrementX = 0
+    incrementY = 0
+
     def __init__(self,numCols=10,numRows=10,cellHeight=20,cellWidth=20):
         super(GameDisplay, self).__init__()
         self.numCols = numCols
@@ -49,7 +60,7 @@ class GameDisplay(QtGui.QWidget):
         self.displayPoint(self.pointPos[0],self.pointPos[1],True)
 
         self.bTimer = QtCore.QBasicTimer()
-        self.bTimer.start(100,self)
+        self.bTimer.start(125,self)
 
         self.show()
 
@@ -61,7 +72,7 @@ class GameDisplay(QtGui.QWidget):
         pxl.setState(setTo)
 
     def movePoint(self,dir):
-        print dir
+#        print dir
         lastPos = copy.deepcopy(self.pointPos)
         if dir == 'up':
             self.displayPoint(self.pointPos[0],self.pointPos[1],False)
@@ -72,12 +83,12 @@ class GameDisplay(QtGui.QWidget):
             self.pointPos[1] = self.pointPos[1]+1 if self.pointPos[1]<self.numRows else self.numRows
             self.displayPoint(self.pointPos[0],self.pointPos[1],True)
         if dir == 'left':
-            print 'left'
+#            print 'left'
             self.displayPoint(self.pointPos[0],self.pointPos[1],False)
             self.pointPos[0] = self.pointPos[0]-1 if self.pointPos[0]>1 else 1
             self.displayPoint(self.pointPos[0],self.pointPos[1],True)
         if dir == 'right':
-            print 'right'
+#            print 'right'
             self.displayPoint(self.pointPos[0],self.pointPos[1],False)
             self.pointPos[0] = self.pointPos[0]+1 if self.pointPos[0]<self.numCols else self.numCols
             self.displayPoint(self.pointPos[0],self.pointPos[1],True)
@@ -98,17 +109,42 @@ class GameDisplay(QtGui.QWidget):
             self.movePoint('right')
 
     def timerEvent(self,e):
-        moveSuccess = True
-        for i in range(abs(self.moveDir[0])):
-            dir = 'left' if self.moveDir[0] < 0 else 'right'
-            r = self.movePoint(dir)
-            self.moveDir[0] = self.moveDir[0] if not r else -self.moveDir[0]
-        for j in range(abs(self.moveDir[1])):
-            dir = 'down' if self.moveDir[1] < 0 else 'up'
-            r = self.movePoint(dir)
-            self.moveDir[1] = self.moveDir[1] if not r else -self.moveDir[1]
-
-
+	#we want to do a figure 8 kind of thing
+	#check the position of the pointer, particularly at the corners
+	if self.pointX == 0:
+		#top left corner, move it down
+		if self.pointY == 0:
+			self.moveDirX = 'none'
+			self.moveDirY = 'down'
+			#change the incrementation so we can keep track of position
+			self.incrementX = 0
+			self.incrementY = 1
+		#bottom left corner, move it diagonal to the right
+		if self.pointY == self.yMax:
+			self.moveDirX = 'right'
+			self.moveDirY = 'up'
+			self.incrementX = 1
+			self.incrementY = -1
+	elif self.pointX == self.xMax:
+		#top right, move it down
+		if self.pointY == 0:
+			self.moveDirX = 'none'
+			self.moveDirY = 'down'
+			self.incrementX = 0
+			self.incrementY = 1
+		#bottom right, move it diagonal to the left
+		if self.pointY == self.yMax:
+			self.moveDirX = 'left'
+			self.moveDirY = 'up'
+			self.incrementX = -1
+			self.incrementY = -1
+	#call the move method, change position value if successful		
+	if self.movePoint(self.moveDirX) == True:
+		self.pointX = self.pointX + self.incrementX
+	if self.movePoint(self.moveDirY) == True:
+		self.pointY = self.pointY + self.incrementY
+	#print position for debugging
+	print str(self.pointX) + ", " + str(self.pointY)
 
 
 def main():
